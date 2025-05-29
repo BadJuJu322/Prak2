@@ -14,11 +14,9 @@ def get_absolute_path(relative_path):
         return os.path.abspath(upload_folder)
     
     full_path = os.path.join(upload_folder, relative_path)
-    # Защита от Path Traversal: убедимся, что путь внутри upload_folder
     abs_upload = os.path.abspath(upload_folder)
     abs_full_path = os.path.abspath(full_path)
     
-    # Нормализуем пути для корректного сравнения
     abs_upload = os.path.normpath(abs_upload)
     abs_full_path = os.path.normpath(abs_full_path)
     
@@ -34,23 +32,19 @@ def index(subpath):
         return "Path not found", 404
     
     if os.path.isfile(abs_path):
-        # Используем новый маршрут для обслуживания файлов
         return redirect(url_for('explore.serve_file', filename=subpath))
     
-    # Получаем список папок и файлов
     files = []
     dirs = []
     for item in os.listdir(abs_path):
         item_abs_path = os.path.join(abs_path, item)
         if os.path.isdir(item_abs_path):
-            # Формируем путь для перехода (относительный от корня UPLOAD_FOLDER)
             dir_path = os.path.join(subpath, item) if subpath else item
             dirs.append((item, dir_path))
         else:
             file_path = os.path.join(subpath, item) if subpath else item
             files.append((item, file_path))
     
-    # Разделим путь на части для breadcrumbs
     breadcrumbs = []
     if subpath:
         parts = subpath.split('/')
@@ -71,7 +65,6 @@ def serve_file(filename):
 
 @bp.route('/upload', methods=['POST'])
 def upload_file():
-    # Получаем текущий путь из формы
     subpath = request.form.get('current_path', '')
     abs_path = get_absolute_path(subpath)
     if abs_path is None or not os.path.isdir(abs_path):
@@ -102,7 +95,6 @@ def mkdir():
     if not dirname:
         return 'Invalid folder name'
     
-    # Обезопасим имя папки
     dirname = secure_filename(dirname)
     if not dirname:
         return 'Invalid folder name'
@@ -124,8 +116,7 @@ def rename():
     new_name = request.form.get('new_name')
     if not old_name or not new_name:
         return 'Invalid names'
-    
-    # Обезопасим имена
+
     old_name = secure_filename(old_name)
     new_name = secure_filename(new_name)
     if not old_name or not new_name:
