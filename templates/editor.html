@@ -118,24 +118,20 @@
         </div>
     </div>
 
-    <!-- Подключаем библиотеки -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // Инициализация редактора
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
         const saveBtn = document.getElementById('save-btn');
         
-        // Функция обновления предпросмотра
+       
         function updatePreview() {
             preview.innerHTML = marked.parse(editor.value);
         }
         
-        // Обновляем предпросмотр при загрузке и изменении
         updatePreview();
         editor.addEventListener('input', updatePreview);
-        
-        // Обработчик сохранения
+    
         saveBtn.addEventListener('click', async () => {
             try {
                 const response = await fetch('/save/{{ filename }}', {
@@ -158,7 +154,6 @@
             }
         });
         
-        // Добавляем горячие клавиши
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
