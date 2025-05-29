@@ -2,9 +2,7 @@
 <html>
 <head>
     <title>File Upload with Dropzone</title>
-    <!-- Dropzone CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         body {
@@ -128,7 +126,6 @@
         <p>Drag & drop files or click to upload</p>
     </div>
     
-    <!-- Dropzone контейнер -->
     <form action="/upload" class="dropzone" id="my-dropzone"></form>
     
     <div class="file-list-container">
@@ -180,10 +177,8 @@
         {% endif %}
     </div>
     
-    <!-- Dropzone JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
     <script>
-        // Инициализация Dropzone
         Dropzone.autoDiscover = false;
         
         const myDropzone = new Dropzone("#my-dropzone", {
@@ -201,25 +196,20 @@
             init: function() {
                 this.on("success", function(file, response) {
                     if (response.success) {
-                        // Добавляем новый файл в список
                         addFileToList(response.filename);
-                        // Удаляем превью файла
                         this.removeFile(file);
                     }
                 });
             }
         });
         
-        // Функция добавления файла в список
         function addFileToList(filename) {
             const fileList = document.getElementById('file-list');
             
-            // Если ранее не было файлов, удаляем сообщение "No files"
             if (document.querySelector('.no-files')) {
                 document.querySelector('.no-files').remove();
             }
             
-            // Если список был скрыт из-за отсутствия файлов, создаем его
             if (!fileList) {
                 const container = document.querySelector('.file-list-container');
                 const newList = document.createElement('ul');
@@ -232,7 +222,6 @@
             listItem.className = 'file-item';
             listItem.id = `file-${filename}`;
             
-            // Определяем тип файла для бейджа
             let badgeClass = 'other-badge';
             let badgeText = 'FILE';
             
@@ -271,11 +260,9 @@
                 </div>
             `;
             
-            // Добавляем в начало списка
             document.getElementById('file-list').insertBefore(listItem, document.getElementById('file-list').firstChild);
         }
         
-        // Функция удаления файла
         function deleteFile(filename) {
             if (confirm(`Are you sure you want to delete "${filename}"?`)) {
                 fetch(`/delete/${filename}`, {
@@ -289,7 +276,6 @@
                             fileElement.remove();
                         }
                         
-                        // Если файлов больше нет, показываем сообщение
                         if (document.getElementById('file-list') && document.getElementById('file-list').children.length === 0) {
                             const container = document.querySelector('.file-list-container');
                             const noFilesDiv = document.createElement('div');
