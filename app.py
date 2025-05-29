@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, send_from_directory, flash, redirect, jsonify, send_file
 import os
 import uuid
-import markdown  # Для преобразования Markdown в HTML
+import markdown
 
 app = Flask(__name__)
 app.secret_key = 'super-secret-key'
@@ -9,7 +9,6 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt', 'md'}
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-# Создаем папку для загрузок
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
@@ -58,7 +57,6 @@ def delete_file(filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Новые функции для работы с Markdown
 @app.route('/edit/<filename>')
 def edit_markdown(filename):
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -66,11 +64,9 @@ def edit_markdown(filename):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    # Проверяем, что это Markdown файл
     if not filename.lower().endswith('.md'):
         return jsonify({'error': 'Not a Markdown file'}), 400
     
-    # Читаем содержимое файла
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
@@ -84,10 +80,8 @@ def save_markdown(filename):
         if not os.path.exists(file_path):
             return jsonify({'error': 'File not found'}), 404
         
-        # Получаем новый контент из запроса
         new_content = request.form.get('content', '')
         
-        # Сохраняем изменения
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(new_content)
         
@@ -103,11 +97,9 @@ def preview_markdown(filename):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    # Читаем содержимое файла
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    
-    # Конвертируем Markdown в HTML
+
     html_content = markdown.markdown(content)
     
     return render_template('preview.html', filename=filename, content=html_content)
