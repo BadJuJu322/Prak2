@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload with Dropzone</title>
+    <!-- Dropzone CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.css" />
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .dropzone {
+            border: 2px dashed #0087F7;
+            border-radius: 5px;
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .dz-message {
+            margin: 2em 0;
+            text-align: center;
+            font-size: 1.2em;
+            color: #666;
+        }
+        .file-list-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+        .file-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .file-item:hover {
+            background-color: #f9f9f9;
+        }
+        .file-name {
+            flex-grow: 1;
+            font-size: 16px;
+            word-break: break-all;
+            padding-right: 15px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .btn-edit {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-view {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-download {
+            background-color: #9C27B0;
+            color: white;
+        }
+        .btn-delete {
+            background-color: #f44336;
+            color: white;
+        }
+        .file-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        .markdown-badge {
+            background-color: #2196F3;
+            color: white;
+        }
+        .image-badge {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .pdf-badge {
+            background-color: #f44336;
+            color: white;
+        }
+        .other-badge {
+            background-color: #9E9E9E;
+            color: white;
+        }
+        .no-files {
+            text-align: center;
+            color: #777;
+            padding: 30px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>File Upload Center</h1>
+        <p>Drag & drop files or click to upload</p>
+    </div>
+    
+    <!-- Dropzone контейнер -->
+    <form action="/upload" class="dropzone" id="my-dropzone"></form>
+    
+    <div class="file-list-container">
+        <h2><i class="fas fa-folder-open"></i> Uploaded Files</h2>
+        
+        {% if files|length == 0 %}
+            <div class="no-files">
+                <p>No files uploaded yet.</p>
+                <p>Upload your first file using the dropzone above!</p>
+            </div>
+        {% else %}
+            <ul id="file-list" class="file-list">
+                {% for file in files %}
+                <li class="file-item" id="file-{{ file }}">
+                    <div class="file-name">
+                        {% if file.endswith('.md') %}
+                            <span class="file-type-badge markdown-badge">MD</span>
+                        {% elif file.endswith('.png') or file.endswith('.jpg') or file.endswith('.jpeg') or file.endswith('.gif') %}
+                            <span class="file-type-badge image-badge">IMG</span>
+                        {% elif file.endswith('.pdf') %}
+                            <span class="file-type-badge pdf-badge">PDF</span>
+                        {% else %}
+                            <span class="file-type-badge other-badge">FILE</span>
+                        {% endif %}
+                        {{ file }}
+                    </div>
+                    <div class="file-actions">
+                        {% if file.endswith('.md') %}
+                            <a href="{{ url_for('edit_markdown', filename=file) }}" class="btn btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank" class="btn btn-view">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        
+                        <a href="{{ url_for('download_markdown', filename=file) }}" class="btn btn-download">
+                            <i class="fas fa-download"></i> 
+                        </a>
+                        
+                        <button class="btn btn-delete" onclick="deleteFile('{{ file }}')">
+                            <i class="fas fa-trash"></i> 
+                        </button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+    
+    <!-- Dropzone JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/dropzone.min.js"></script>
+    <script>
+        // Инициализация Dropzone
+        Dropzone.autoDiscover = false;
+        
+        const myDropzone = new Dropzone("#my-dropzone", {
+            paramName: "file",
+            maxFilesize: 16, // MB
+            acceptedFiles: "image/*,application/pdf,.txt,.md",
+            dictDefaultMessage: "<i class='fas fa-cloud-upload-alt' style='font-size: 3em; margin-bottom: 15px;'></i><br>Drop files here or click to upload",
+            dictFallbackMessage: "Your browser does not support drag'n'drop file uploads.",
+            dictFileTooBig: "File is too big ({{filesize}}MB). Max filesize: {{maxFilesize}}MB.",
+            dictInvalidFileType: "Invalid file type. Allowed types: images, PDF, text, Markdown",
+            dictResponseError: "Server responded with {{statusCode}} code.",
+            dictCancelUpload: "Cancel upload",
+            dictCancelUploadConfirmation: "Are you sure you want to cancel this upload?",
+            dictRemoveFile: "Remove file",
+            init: function() {
+                this.on("success", function(file, response) {
+                    if (response.success) {
+                        // Добавляем новый файл в список
+                        addFileToList(response.filename);
+                        // Удаляем превью файла
+                        this.removeFile(file);
+                    }
+                });
+            }
+        });
+        
+        // Функция добавления файла в список
+        function addFileToList(filename) {
+            const fileList = document.getElementById('file-list');
+            
+            // Если ранее не было файлов, удаляем сообщение "No files"
+            if (document.querySelector('.no-files')) {
+                document.querySelector('.no-files').remove();
+            }
+            
+            // Если список был скрыт из-за отсутствия файлов, создаем его
+            if (!fileList) {
+                const container = document.querySelector('.file-list-container');
+                const newList = document.createElement('ul');
+                newList.id = 'file-list';
+                newList.className = 'file-list';
+                container.appendChild(newList);
+            }
+            
+            const listItem = document.createElement('li');
+            listItem.className = 'file-item';
+            listItem.id = `file-${filename}`;
+            
+            // Определяем тип файла для бейджа
+            let badgeClass = 'other-badge';
+            let badgeText = 'FILE';
+            
+            if (filename.endsWith('.md')) {
+                badgeClass = 'markdown-badge';
+                badgeText = 'MD';
+            } else if (filename.endsWith('.png') || filename.endsWith('.jpg') || 
+                       filename.endsWith('.jpeg') || filename.endsWith('.gif')) {
+                badgeClass = 'image-badge';
+                badgeText = 'IMG';
+            } else if (filename.endsWith('.pdf')) {
+                badgeClass = 'pdf-badge';
+                badgeText = 'PDF';
+            }
+            
+            listItem.innerHTML = `
+                <div class="file-name">
+                    <span class="file-type-badge ${badgeClass}">${badgeText}</span>
+                    ${filename}
+                </div>
+                <div class="file-actions">
+                    ${filename.endsWith('.md') ? 
+                        `<a href="/edit/${filename}" class="btn btn-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>` : ''
+                    }
+                    <a href="/uploads/${filename}" target="_blank" class="btn btn-view">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <a href="/download/${filename}" class="btn btn-download">
+                        <i class="fas fa-download"></i> 
+                    </a>
+                    <button class="btn btn-delete" onclick="deleteFile('${filename}')">
+                        <i class="fas fa-trash"></i> 
+                    </button>
+                </div>
+            `;
+            
+            // Добавляем в начало списка
+            document.getElementById('file-list').insertBefore(listItem, document.getElementById('file-list').firstChild);
+        }
+        
+        // Функция удаления файла
+        function deleteFile(filename) {
+            if (confirm(`Are you sure you want to delete "${filename}"?`)) {
+                fetch(`/delete/${filename}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const fileElement = document.getElementById(`file-${filename}`);
+                        if (fileElement) {
+                            fileElement.remove();
+                        }
+                        
+                        // Если файлов больше нет, показываем сообщение
+                        if (document.getElementById('file-list') && document.getElementById('file-list').children.length === 0) {
+                            const container = document.querySelector('.file-list-container');
+                            const noFilesDiv = document.createElement('div');
+                            noFilesDiv.className = 'no-files';
+                            noFilesDiv.innerHTML = `
+                                <p>No files uploaded yet.</p>
+                                <p>Upload your first file using the dropzone above!</p>
+                            `;
+                            container.appendChild(noFilesDiv);
+                        }
+                    } else {
+                        alert('Error deleting file: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
